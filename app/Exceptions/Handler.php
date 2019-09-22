@@ -3,7 +3,11 @@
 namespace App\Exceptions;
 
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class Handler extends ExceptionHandler
 {
@@ -29,7 +33,7 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param  \Exception  $exception
+     * @param \Exception $exception
      * @return void
      */
     public function report(Exception $exception)
@@ -40,12 +44,85 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param \Illuminate\Http\Request $request
+     * @param \Exception $exception
      * @return \Illuminate\Http\Response
+     */
+//    public function render($request, Exception $exception)
+//    {
+//        return parent::render($request, $exception);
+//    }
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \Exception $exception
+     * @return \Illuminate\Http\Response | \Symfony\Component\HttpFoundation\Response
      */
     public function render($request, Exception $exception)
     {
+        if ($exception instanceof ValidationException) {
+            $exception->status(200);
+            return $this->convertValidationExceptionToResponse($exception, $request);
+        }
+        //检测是否登录 验证失败时 抛出的异常
+        if ($exception instanceof AuthenticationException) {
+            // $exception->status(200);
+            return response()->json(['status' => 40001, 'msg' => 'no-login', 'redirect_url' => '/admin/login']);
+            // return $this->convertValidationExceptionToResponse($exception, $request);
+        }
         return parent::render($request, $exception);
+    }
+
+    public function unauthenticated($request, AuthenticationException $exception)
+    {
+        return $request->expectsJson()
+            ? response()->json(['message' => $exception->getMessage()], 401)
+            : redirect()->guest(route('admin.login'));
+    }
+
+    /**
+     * 重写 修改json相应时的格式
+     * @param  [type]              $request   [description]
+     * @param ValidationException $exception [description]
+     * @return \Illuminate\Http\Response | \Symfony\Component\HttpFoundation\Response
+     * @author cuibo weiai525@outlook.com at 2018-05-03
+     */
+    protected function invalidJson($request, ValidationException $exception)
+    {
+        $message = $exception->getMessage();
+        $errors = $exception->errors();
+        if (count($errors) > 0) {
+            $ls = Arr::first($errors);
+            $message = $ls[0];
+        }
+        return response()->json([
+            'status' => 30001,
+            'msg' => $message,
+            'errors' => $exception->errors(),
+            'auto_msg' => true,
+        ], $exception->status);
+    }
+    // protected function convertValidationExceptionToResponse(ValidationException $e, $request)
+    // {
+    //     if ($e->response) {
+    //         print_r($e->response);
+    //         return $e->response;
+    //     }
+
+    //     return $request->expectsJson()
+    //     ? $this->invalidJson($request, $e)
+    //     : $this->invalid($request, $e);
+    // }
+
+    protected function convertValidationExceptionToResponse(ValidationException $e, $request)
+    {
+        Log::error('validator_error:', $request->all());
+        if ($e->response) {
+            return $e->response;
+        }
+        return $request->expectsJson() || env('APP_ENV') != 'production'
+            ? $this->invalidJson($request, $e)
+            : $this->invalid($request, $e);
     }
 }
