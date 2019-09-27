@@ -15,10 +15,11 @@
     ],
     "require": {
         "php": "^7.2",
+        "encore/laravel-admin": "^1.7",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "^6.0",
-        "wealook/generate-laravel-code": "^1.0.0",
-        "laravel/tinker": "^1.0"
+        "laravel/tinker": "^1.0",
+        "wealook/generate-laravel-code": "^1.0.0"
     },
     "require-dev": {
         "facade/ignition": "^1.4",
