@@ -7,10 +7,17 @@
         "laravel"
     ],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/wealook/generate-laravel-code.git"
+        }
+    ],
     "require": {
         "php": "^7.2",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "^6.0",
+        "wealook/generate-laravel-code": "^1.0.0",
         "laravel/tinker": "^1.0"
     },
     "require-dev": {
