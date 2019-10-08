@@ -87,7 +87,7 @@ class Handler extends ExceptionHandler
             $message = $ls[0];
         }
         return response()->json([
-            'status' => 30001,
+            'code' => 30001,
             'msg' => $message,
             'errors' => $exception->errors(),
             'auto_msg' => true,

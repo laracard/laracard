@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\User;
+use App\Models\User;
+use App\Traits\ApiResponse;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Interfaces\Auth\AuthInterface;
 
 class RegisterController extends Controller
 {
@@ -21,6 +25,7 @@ class RegisterController extends Controller
     |
     */
 
+    use ApiResponse;
     use RegistersUsers;
 
     /**
@@ -29,15 +34,29 @@ class RegisterController extends Controller
      * @var string
      */
     protected $redirectTo = '/home';
+    protected $authService;
 
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * RegisterController constructor.
+     * @param  AuthInterface  $authService
      */
-    public function __construct()
+    public function __construct(AuthInterface $authService)
     {
+        $this->authService = $authService;
         $this->middleware('guest');
+    }
+
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+        $user = $this->create($request->all());
+        $res = $this->authService->register($user, $request['password']);
+        event(new Registered($user));
+        $this->guard()->login($user);
+
+        return $this->success();
+//        return $this->registered($request, $user)
+//            ?: redirect($this->redirectPath());
     }
 
     /**
@@ -49,8 +68,8 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+//            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:pub_user'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -59,14 +78,12 @@ class RegisterController extends Controller
      * Create a new user instance after a valid registration.
      *
      * @param  array  $data
-     * @return \App\User
+     * @return User
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $user = new User();
+        $user->email = $data['email'];
+        return $user;
     }
 }
