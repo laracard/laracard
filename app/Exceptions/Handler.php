@@ -31,10 +31,11 @@ class Handler extends ExceptionHandler
     ];
 
     /**
-     * Report or log an exception.
-     *
-     * @param \Exception $exception
-     * @return void
+     * [description]
+     * @param  Exception  $exception
+     * @return mixed|void
+     * @throws Exception
+     * @author: cuibo 2019/10/8 11:53
      */
     public function report(Exception $exception)
     {
@@ -42,22 +43,11 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Render an exception into an HTTP response.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Exception $exception
-     * @return \Illuminate\Http\Response
-     */
-//    public function render($request, Exception $exception)
-//    {
-//        return parent::render($request, $exception);
-//    }
-    /**
-     * Render an exception into an HTTP response.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Exception $exception
-     * @return \Illuminate\Http\Response | \Symfony\Component\HttpFoundation\Response
+     * [description]
+     * @param  \Illuminate\Http\Request  $request
+     * @param  Exception  $exception
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response|null
+     * @author: cuibo 2019/10/8 11:54
      */
     public function render($request, Exception $exception)
     {
@@ -103,21 +93,9 @@ class Handler extends ExceptionHandler
             'auto_msg' => true,
         ], $exception->status);
     }
-    // protected function convertValidationExceptionToResponse(ValidationException $e, $request)
-    // {
-    //     if ($e->response) {
-    //         print_r($e->response);
-    //         return $e->response;
-    //     }
-
-    //     return $request->expectsJson()
-    //     ? $this->invalidJson($request, $e)
-    //     : $this->invalid($request, $e);
-    // }
-
     protected function convertValidationExceptionToResponse(ValidationException $e, $request)
     {
-        Log::error('validator_error:', $request->all());
+        Log::debug('validator_error:', $request->all());
         if ($e->response) {
             return $e->response;
         }
