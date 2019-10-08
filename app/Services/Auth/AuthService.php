@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Models\Auth\UserActionHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -23,13 +24,20 @@ class AuthService implements AuthInterface
     public function check(User $user, string $password): bool
     {
         return Auth::attempt(['email' => $user->email, 'password' => $password, 'status' => 1]);
-//
-//        var_dump(Hash::needsRehash($user->passowrd));
-//        Log::error($password . $user->salt . '   ' . $user->password);
-//        $res = Hash::check($password, $user->passowrd);
-//        var_dump($res);
-//        die;
-//        return $res;
+    }
+
+    public function logActionHistory(User $user, $actionType)
+    {
+        try {
+            UserActionHistory::query()->create([
+                'user_id' => $user->id,
+                'action_type' => $actionType,
+                'ip' => request()->getClientIp(),
+            ]);
+        } catch (\Throwable $throwable) {
+            Log::error('logActionHistory ' . $throwable->getMessage());
+        }
+
     }
 
     private function generateSalt()

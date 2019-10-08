@@ -10,4 +10,5 @@ interface  AuthInterface
 
     public function check(User $user, string $password): bool;
 
+    public function logActionHistory(User $user, $actionType);
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\LoginEvent;
 use App\Http\Controllers\Controller;
 use App\Interfaces\Auth\AuthInterface;
 use App\Models\User;
@@ -44,7 +45,7 @@ class LoginController extends Controller
     public function __construct(AuthInterface $authService)
     {
         $this->authService = $authService;
-        $this->middleware('guest')->except('logout');
+//        $this->middleware('guest')->except('logout');
         $this->maxAttempts = 10;
         $this->decayMinutes = 1;
     }
@@ -62,6 +63,7 @@ class LoginController extends Controller
         }
         $user = User::query()->where('email', $request['email'])->where('status', 1)->firstOrFail();
         if ($this->authService->check($user, $request['password'])) {
+            event(new LoginEvent($user));
             return $this->sendLoginResponse($request);
         }
         // If the login attempt was unsuccessful we will increment the number of attempts
